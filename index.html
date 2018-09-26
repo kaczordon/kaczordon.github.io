@@ -1,0 +1,156 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video demo</title>
+    <style>
+      body {
+        position: relative;
+      }
+      .wrapper {
+        position: relative;
+        display:inline-block;
+      }
+      video::-webkit-media-controls {
+        display:none !important;
+      }
+      video {
+        width: 100% !important;
+        height: auto !important;
+        display: block;
+      }
+      .sound {
+        content: url(sound.png);;
+        position: absolute;
+        background: rgba(169, 169, 169, 0.5);
+        top: 0px;
+        left: 0px;
+        width: 26px;
+        height: 26px;
+        z-index: 2;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper" id="videoWrapper">
+        <div class="sound" id="sound">&nbsp;</div>
+        <video id="video" loop muted playsinline />
+    </div>
+
+    <script>
+        let url = 'https://demo.arturo.video/data/videos.json';
+        let response = null;
+        let currentVideoCounter = 0;
+        let source = null, started = false, currentCaptions = [];
+        let video = null;
+        fetch(url)
+        .then(res => res.json())
+        .then(json => {
+          response = json;
+          createVideo(response[currentVideoCounter]);
+        }).catch(e => console.log('Error thrown: ', e));
+  
+        function createVideo(nextVideo) {
+          video = document.getElementById('video');
+          video.appendChild(createSource(nextVideo.video));
+          setupTouch();
+          displayCaptions(nextVideo.captions);
+          video.load();
+        }
+  
+        function setupTouch() {
+          const videoWrapper = document.getElementById('videoWrapper');
+          const sound = document.getElementById('sound');
+          videoWrapper.addEventListener('touchstart',  e => e.preventDefault());
+          videoWrapper.addEventListener('touchmove',  e => e.preventDefault());
+          videoWrapper.addEventListener('touchend',  e => {
+            e.preventDefault();
+            if(started === false) {//start the video if this is the first time we're starting the story
+              video.play();
+              started = true;
+              video.addEventListener('canplay', function() { //autoplay videos
+                video.play();
+              })
+              return;
+            }
+            //normalize to width of video
+            let videoWidth = videoWrapper.clientWidth;
+            let x = normalize(e.changedTouches[0].clientX, videoWidth, 0);
+            x *= videoWidth;
+            if(x > videoWidth / 2)
+              changeSource(true);
+            else
+              changeSource(false);
+          });
+          sound.addEventListener("touchend", soundOn);
+        }
+  
+        function createSource(src) {
+          source = document.createElement('source');
+          source.setAttribute('src', src);
+          source.setAttribute('type', 'video/mp4');
+          return source;
+        }
+  
+        function changeSource(moveLeft) {
+          const nextVideo = getNextVideo(moveLeft);
+          removeCaptions();
+          displayCaptions(nextVideo.captions);
+          source.setAttribute('src', nextVideo.video);
+          video.load();
+        }
+  
+        function getNextVideo(moveLeft) {
+          if(moveLeft && currentVideoCounter === response.length - 1) {
+            currentVideoCounter = 0;
+          } else if(moveLeft) {
+            currentVideoCounter++;
+          } 
+          if(!moveLeft && currentVideoCounter === 0) {
+            currentVideoCounter = response.length - 1;
+          } else if(!moveLeft) {
+            currentVideoCounter--;
+          }
+          return response[currentVideoCounter];
+        }
+  
+        function soundOn(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          video.muted = !video.muted;
+        }
+  
+        function displayCaptions(captions) {
+          if(!captions)
+            return;
+          const videoWrapper = document.getElementById('videoWrapper');
+          captions.forEach(caption => {
+            let c = document.createElement('div');
+            let content = document.createTextNode(caption.text);
+            let style = c.style;
+            style.fontSize = caption.size;
+            style.fontFamily = caption.font;
+            style.backgroundColor = caption['background-color'];
+            style.transform = `translate(${caption.x}vw, ${caption.y}vh)`;
+            style.position = 'absolute';
+            style.zIndex = '10';
+            style.top = '0px';
+            style.left = '0px';
+            style.color = caption.color;
+            c.appendChild(content);
+            videoWrapper.appendChild(c)
+            currentCaptions.push(c)
+          });
+        }
+  
+        function removeCaptions() {
+          currentCaptions.forEach(el => {
+            el.remove();
+          })
+        }
+  
+        function normalize(val, max, min) { 
+          return Math.min(1, ((val - min) / (max - min))); 
+        }
+      </script>
+  </body>
+</html>
