@@ -2,43 +2,47 @@
 <html>
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1">
     <script src="https://baloise-ui-library.now.sh/build/ui-library.js"></script>
     <link rel="stylesheet" href="https://baloise-ui-library.now.sh/build/ui-library.css" />
   </head>
-  <body class="bal-app">
-    <div class="box">
-      <div class="section">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-      </div>
-  </div>
+  <body class="bal-app is-padded">
+    <h2 class="title is-2 has-text-centered is-capitalized">Reviews by Max</h2>
+<figure class="image">
+  <image src="https://images.squarespace-cdn.com/content/v1/544057eee4b0c5dff23f0ef8/1511993287491-3RJRWLLL6MFYKDKBSBNN/ke17ZwdGBToddI8pDm48kKCnXnwcT0QUitMSaEmlBC8UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYxCRW4BPu10St3TBAUQYVKccQe5gdPbwQPtLp__r0ZV0dwj60L-U7OGk5ScHAAbu9Se_2Gi5szV2fm9tsEvKebY/YUR+_+Max+Allman+_+Photo.jpg"/>
+</figure>
+<div class="bal-track-line is-padded"></div>
+<div class="reviews my-6">
+  <bal-spinner></bal-spinner>
+</div>
   <script type="module">
     // import * as pkg from 'https://cdn.pika.dev/bal-ui-library@^1.24.0';
     // import * as cheerio from 'https://cdn.pika.dev/cheerio@^1.0.0-rc.3';
     // import * as htmlparser2 from 'https://cdn.pika.dev/htmlparser2@^4.1.0';
     // const parser = new htmlparser2.Parser();
-    function isListItem (element) {
-  // if the list path is in the url
-  if (getUri(element).indexOf('/list/') !== -1) {
-    return true;
-  }
+  function isListItem (element) {
+    // if the list path is in the url
+    if (getUri(element).indexOf('/list/') !== -1) {
+      return true;
+    }
 
-  return false;
+    return false;
 }
 
 function getPublishedDate (element) {
-  return +new Date(element.find('pubDate').text());
+  return +new Date(element.querySelector('pubDate').innerHTML);
 }
 
 function getWatchedDate (element) {
-  return +new Date(element.find('letterboxd\\:watchedDate').text());
+  return +new Date(element.querySelector('watchedDate').innerHTML);
 }
 
 function getUri (element) {
-  return element.find('link').html();
+  return element.querySelector('link').innerHTML;
 }
 
 function getTitleData (element) {
-  return element.find('title').text();
+  return element.querySelector('title').innerHTML;
 }
 
 function getSpoilers (element) {
@@ -83,6 +87,7 @@ function getRating (element) {
     '★★★★★': 5.0
   };
   rating.score = score2Text[rating.text];
+  rating.text = rating.text;
 
   return rating;
 }
@@ -115,11 +120,11 @@ function getYear (element) {
 }
 
 function getImage (element) {
-  var description = element.find('description').text();
-  var $ = cheerio.load(description);
-
+  var description = element.querySelector('description');
+  // var $ = cheerio.load(description);
+  var s = description.innerHTML;
   // find the film poster and grab it's src
-  var image = $('p img').attr('src');
+  var image = s.substring(s.indexOf('https'), s.indexOf('"/'));
 
   // if the film has no image return no object
   if (!image) {
@@ -135,10 +140,12 @@ function getImage (element) {
 }
 
 function getReview (element) {
-  var description = element.find('description').text();
-  var $ = cheerio.load(description);
+  var description = element.querySelector('description');
+  // var $ = cheerio.load(description);
 
-  var reviewParagraphs = $('p');
+  var s = description.innerHTML;
+  // find the film poster and grab it's src
+  var reviewParagraphs = s.substring(s.indexOf('</p> <p>') + 8, s.indexOf('</p> ]]>'));
 
   // if there is no review return the item
   if (reviewParagraphs.length <= 0) {
@@ -147,14 +154,14 @@ function getReview (element) {
 
   // the rest of description is a review, if there is no review the string 'Watched on ' will appear
   // this assumes you didn't write the 'Watched on ' string in your review... weak
-  if (reviewParagraphs.last().text().indexOf('Watched on ') !== -1) {
+  if (reviewParagraphs.indexOf('Watched on ') !== -1) {
     return false;
   }
-
+ return reviewParagraphs;
   var review = '';
 
   // loop through paragraphs
-  reviewParagraphs.each(function () {
+  reviewParagraphs.forEach(function () {
     var reviewParagraph = $(this).text();
 
     // only add paragaphs that are the review
@@ -170,33 +177,33 @@ function getReview (element) {
 }
 
 function getListFilms (element) {
-  var description = element.find('description').text();
-  var $ = cheerio.load(description);
+  var description = element.querySelector('description');
+  // var $ = cheerio.load(description);
 
   var films = [];
-  $('li a').each(function (i, filmElement) {
+  description.querySelector('li a').forEach(function (filmElement, i) {
     films.push({
-      title: $(filmElement).text(),
-      uri: $(filmElement).attr('href')
+      title: filmElement.innerHTML,
+      uri: filmElement.getAttribute('href')
     });
   });
   return films;
 }
 
 function getListDescription (element) {
-  var description = element.find('description').text();
-  var $ = cheerio.load(description);
+  var description = element.querySelector('description');
+  // var $ = cheerio.load(description);
 
   var result = false;
 
   // if there are no paragraphs in the description there isnt one
-  if ($('p').length <= 0) {
+  if (description.querySelector('p').length <= 0) {
     return result;
   }
 
-  $('p').each(function (i, element) {
+  description.querySelector.forEach(function (element, i) {
     // we'll assume descriptions dont have the link text in
-    var text = $(element).text();
+    var text = element.innerHTML;
     var isntPlusMoreParagraph = text.indexOf('View the full list on Letterboxd') === -1;
     if (isntPlusMoreParagraph) {
       result = text;
@@ -207,19 +214,19 @@ function getListDescription (element) {
 }
 
 function getListTotalFilms (element) {
-  var description = element.find('description').text();
-  var $ = cheerio.load(description);
+  var description = element.querySelector('description');
+  // var $ = cheerio.load(description);
 
   var films = getListFilms(element);
 
   var result = films.length;
 
   // if there are no paragraphs in the description there isnt one
-  if ($('p').length <= 0) {
+  if (description.querySelector('p').length <= 0) {
     return result;
   }
 
-  $('p').each(function (i, paragraphElement) {
+  description.querySelector('p').forEach(function (paragraphElement, i) {
     var text = $(paragraphElement).text();
     var isPlusMoreParagraph = text.indexOf('View the full list on Letterboxd') !== -1;
     if (isPlusMoreParagraph) {
@@ -239,10 +246,10 @@ function getListTotalFilms (element) {
 }
 
 function isListRanked (element) {
-  var description = element.find('description').text();
-  var $ = cheerio.load(description);
+  var description = element.querySelector('description');
+  // var $ = cheerio.load(description);
 
-  var isOrderedListPresent = !!$('ol').length;
+  var isOrderedListPresent = !!description.querySelector('ol').length;
   return isOrderedListPresent;
 }
 
@@ -251,18 +258,19 @@ function processItem (element) {
 
   if (isListItem(element)) {
     // return a list
-    return {
-      type: 'list',
-      date: {
-        published: getPublishedDate(element)
-      },
-      title: getTitleData(element),
-      description: getListDescription(element),
-      ranked: isListRanked(element),
-      films: getListFilms(element),
-      totalFilms: getListTotalFilms(element),
-      uri: getUri(element)
-    };
+    return {type: 'list'}
+    // return {
+    //   type: 'list',
+    //   date: {
+    //     published: getPublishedDate(element)
+    //   },
+    //   title: getTitleData(element),
+    //   description: getListDescription(element),
+    //   ranked: isListRanked(element),
+    //   films: getListFilms(element),
+    //   totalFilms: getListTotalFilms(element),
+    //   uri: getUri(element)
+    // };
   }
 
   // otherwise return a diary entry
@@ -289,35 +297,50 @@ function invalidUsername (username) {
 }
 
 function getDiaryData (username) {
-  var uri = 'https://letterboxd.com/' + username + '/rss/';
+  var uri = 'https://cors-anywhere.herokuapp.com/https://letterboxd.com/' + username + '/rss/';
 
   return new Promise(function (resolve, reject) {
     
-    fetch(uri, {
-    method: 'GET', // *GET, POST, PUT, DELETE, etc.
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/rss+xml'
-    }})
+    fetch(uri)
     .then(response => response.text())
     .then(str => new window.DOMParser().parseFromString(str, "text/xml"))
-    .then(data => console.log(data))
-    // .then(data => {
-    //   console.log('Success:', data);
-    //   var $ = cheerio.load(data, { xmlMode: true });
+    .then(data => {
+      console.log(data);
+      var elements = data.querySelectorAll('item');
 
-    //   var items = [];
+      var items = [];
+      var str = '';
+      var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
-    //   $('item').each(function (i, element) {
-    //     var item = processItem($(element));
-
-    //     if (item) {
-    //       items[i] = item;
-    //     }
-    //   });
-
-    //   return resolve(items);
-    // })
+      elements.forEach(function (element, i) {
+        var item = processItem(element);
+        
+        if (item && item.type !== 'list') {
+          if(item.film.title.length > 30) item.film.title = item.film.title.slice(0, 30) + '...';
+          var s = ''
+          if(i == 0 || i % 3 == 1) s += '<div class="tile is-ancestor">'
+          s += `<div class="tile is-parent"><bal-card class="my-3 tile is-child">`;
+          s += `<bal-card-heading class="has-text-centered">${item.film.title}</bal-card-heading>`
+          s += `<div class="columns is-mobile">
+                  <div class="column">
+                    <figure class="image is-128x128"><image src="${item.film.image.medium}" /></figure>
+                  </div>`
+          items[i] = item;
+          var icon = n => `<bal-list-item-icon><bal-icon size="medium" name="${n}"></bal-icon></bal-list-item-icon>`
+          s += `<div class="column"><bal-list class="box is-padded"><bal-list-item>${icon('info-circle')}<bal-list-item-content>${item.rating.text}</bal-list-item-content></bal-list-item>`
+          s += `<bal-list-item>${icon('date')}<bal-list-item-content>${new Date(item.date.published).toLocaleDateString("en-US")}</bal-list-item-content></bal-list-item></bal-list></div></div>`
+          // s += `<bal-icon class="alert" name="date" size="medium" isLeft><span class="is-size-6">hello</span></bal-icon></div></div>`
+          // s += `<bal-card-subtitle>${item.film.title}</bal-card-subtitle>`
+          s += `<bal-accordion open-label="See his review" close-label="close review"><p class="is-padded">${item.review}</p></bal-accordion>`
+          s += '</bal-card></div>';
+          if(i % 3 == 0) s += '</div>'
+          str += s;
+        }
+        
+      });
+      document.querySelector('.reviews').innerHTML = str;
+      return resolve(items);
+      })
     .catch((error) => {
       console.error('Error:', error);
       return reject('Error:', error);
