@@ -11,6 +11,7 @@
 <figure class="image">
   <image src="https://images.squarespace-cdn.com/content/v1/544057eee4b0c5dff23f0ef8/1511993287491-3RJRWLLL6MFYKDKBSBNN/ke17ZwdGBToddI8pDm48kKCnXnwcT0QUitMSaEmlBC8UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYxCRW4BPu10St3TBAUQYVKccQe5gdPbwQPtLp__r0ZV0dwj60L-U7OGk5ScHAAbu9Se_2Gi5szV2fm9tsEvKebY/YUR+_+Max+Allman+_+Photo.jpg"/>
 </figure>
+<h2 class="subtitle">The reviewer in his element.</h2>
 <div class="bal-track-line is-padded"></div>
 <div class="reviews my-6">
   <bal-spinner></bal-spinner>
@@ -312,10 +313,17 @@ function getDiaryData (username) {
       var str = '';
       var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
 
+      function randomNumber(min, max) {  
+        return Math.random() * (max - min) + min; 
+      }  
       elements.forEach(function (element, i) {
         var item = processItem(element);
         
         if (item && item.type !== 'list') {
+          if(!item.review) {
+            var t = 'hyuck ';
+            item.review = t.repeat(randomNumber(1, 20))
+          }
           if(item.film.title.length > 30) item.film.title = item.film.title.slice(0, 30) + '...';
           var s = ''
           if(i == 0 || i % 3 == 1) s += '<div class="tile is-ancestor">'
