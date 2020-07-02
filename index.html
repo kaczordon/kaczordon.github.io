@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="initial-scale=1, maximum-scale=1">
+    <meta property="og:image" content="https://images.squarespace-cdn.com/content/v1/544057eee4b0c5dff23f0ef8/1511993287491-3RJRWLLL6MFYKDKBSBNN/ke17ZwdGBToddI8pDm48kKCnXnwcT0QUitMSaEmlBC8UqsxRUqqbr1mOJYKfIPR7LoDQ9mXPOjoJoqy81S2I8N_N4V1vUb5AoIIIbLZhVYxCRW4BPu10St3TBAUQYVKccQe5gdPbwQPtLp__r0ZV0dwj60L-U7OGk5ScHAAbu9Se_2Gi5szV2fm9tsEvKebY/YUR+_+Max+Allman+_+Photo.jpg" />
+    <meta property="og:title" content="Max reviews film" />
     <script src="https://baloise-ui-library.now.sh/build/ui-library.js"></script>
     <link rel="stylesheet" href="https://baloise-ui-library.now.sh/build/ui-library.css" />
   </head>
@@ -312,6 +314,18 @@ function getDiaryData (username) {
       var items = [];
       var str = '';
       var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      var score2Text = {
+        '½': 0.5,
+        '★': 1.0,
+        '★½': 1.5,
+        '★★': 2.0,
+        '★★½': 2.5,
+        '★★★': 3.0,
+        '★★★½': 3.5,
+        '★★★★': 4.0,
+        '★★★★½': 4.5,
+        '★★★★★': 5.0
+      };
 
       function randomNumber(min, max) {  
         return Math.random() * (max - min) + min; 
@@ -323,6 +337,9 @@ function getDiaryData (username) {
           if(!item.review) {
             var t = 'hyuck ';
             item.review = t.repeat(randomNumber(1, 20))
+          }
+          if(!(item.rating.text in score2Text)) {
+            item.rating.text = "too lazy to rate this one."
           }
           if(item.film.title.length > 30) item.film.title = item.film.title.slice(0, 30) + '...';
           var s = ''
